@@ -1,3 +1,5 @@
+Iteration 4 doesn't contain the circle getting bigger when someone is staring at one point and the circle disappearing when the data becomes junk.
+
 UPDATES:
 1. There turned out to be a delay, or some misrepresentation of time in the gazedata and the video. Hence, we are back at square one! We do not where or when the gaze data starts so we are back to working with the idea of working backwards and seeing where it goes.
 
