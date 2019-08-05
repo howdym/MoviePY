@@ -41,7 +41,6 @@ def some_name(vpath, gpath, final_name):
         else:
             break
 
-    print("there")
     # Where to start in these backwards for loops
     loop_end = len(list_of_datapoints) - 1
 
@@ -103,7 +102,6 @@ def some_name(vpath, gpath, final_name):
         f.write(list_of_datapoints[i])
     f.close()
 
-    print("here")
     # Update where the end of the loop is, now that the size of list_of_datapoints has changed
     loop_end = len(list_of_datapoints) - 1
 
