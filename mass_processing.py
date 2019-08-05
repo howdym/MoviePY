@@ -17,13 +17,15 @@ for f in list_of_sessions:
         gaze = ""
         video = ""
         audio = ""
+        temp_name = ""
         for filename in os.listdir(i):
             if filename.endswith(".stream~") or filename.endswith(".stream_"):
-                gaze = filename
+                gaze = os.path.join(i, filename)
             elif filename.endswith(".mp4") or filename.endswith(".avi"):
-                video = filename
+                video = os.path.join(i, filename)
             elif filename.endswith(".wav"):
-                audio = filename
+                audio = os.path.join(i, filename)
+            temp_name = os.path.join(i, "inter.mp4")
         last_fslash = i.rfind('\\')
         first_bslash = i.find('/')
         comp_name = i[last_fslash + 1: len(i)]
@@ -31,10 +33,10 @@ for f in list_of_sessions:
         name = sesh_number + comp_name + "_overlayed"
         clip = VideoFileClip(video)
         if float(clip.w / clip.h) != float(1280 / 720):
-            os.system("ffmpeg -i" + video + "-vf scale=720:405 inter1.mp4")
+            os.system("ffmpeg -i " + video + " -vf scale=720:405 inter1.mp4")
             os.system("del /f " + video)
-            os.system("move inter1.mp4" + video)
-        # os.system("ffmpeg -i " + video " -i " + audio + " -codec copy -shortest inter.mp4")
-        # os.system("python main.py inter.mp4 " + gaze + name)
-        # os.system("del /f inter.mp4")
+            os.system("move inter1.mp4 " + video)
+        os.system("ffmpeg -i " + video + " -i " + audio + " -c:a aac -shortest " + temp_name)
+        os.system("python main.py inter.mp4 " + gaze + name)
+        os.system("del /f " + temp_name)
     list_of_folders.clear()

@@ -1,7 +1,9 @@
 from moviepy.editor import *
-import datetime
+import collections
 
-def some_name(vpath, gpath):
+
+def some_name(vpath, gpath, final_name):
+
     # Access the video using the path given
     video = VideoFileClip(vpath)
     # Open up the file containing the gaze data using path given
@@ -13,6 +15,7 @@ def some_name(vpath, gpath):
     # How long the video is, and how we are going to keep track/record time (we are working backwards)
     running_time = video.duration
 
+    # Conditional gives us dimensions of computer to calibrate
     width = 1280
     height = 720
 
@@ -21,6 +24,24 @@ def some_name(vpath, gpath):
     x_ratio = (video.w - 20) / width
     y_ratio = (video.h - 20) / height
 
+    cnt = collections.Counter()
+
+    for i in range(0, len(list_of_datapoints)):
+        cnt[list_of_datapoints[i]] += 1
+
+    for i in cnt.most_common():
+        if i[1] > 1:
+            counter = i[1]
+            for j in range(len(list_of_datapoints) - 1, -1, -1):
+                if list_of_datapoints[j] == i[0] and counter != 1:
+                    list_of_datapoints.pop(j)
+                    counter -= 1
+                elif counter == 1:
+                    break
+        else:
+            break
+
+    print("there")
     # Where to start in these backwards for loops
     loop_end = len(list_of_datapoints) - 1
 
@@ -77,82 +98,12 @@ def some_name(vpath, gpath):
             if duration < 0 or duration > video.duration / 2:
                 list_of_datapoints.pop(i - 1)
 
-    # This temp array will be a filtered array of items with no repeats. Will be used to check against each item in the
-    # original list.
-    temp = []
-    # First put in the first datapoint, because nothing can be repeated if there is nothing to compare it to (the empty
-    # temp array)
-    temp.insert(0, list_of_datapoints[0])
-    # This boolean variable is our way of keeping track if the target line we are looking at repeats or not.
-    not_repeat = True
-    # This nested for loop chunk is meant to check for repeats.
-    # First look at every point in the original list
+    f = open(final_name + ".txt", "w+")
     for i in range(0, len(list_of_datapoints)):
-        # Compare it to every point in the filtered list
-        for j in range(0, len(temp)):
-            # If a point in the filtered list is also a point in the list_of_datapoints (it is past the point that got
-            # added to the filtered list so that doesn't matter).
-            if temp[j] == list_of_datapoints[i]:
-                # It then means it repeats so change the variable.
-                not_repeat = False
-        # Check if it doesn't repeat so that we can add that data point to the filtered list.
-        if not_repeat:
-            temp.insert(len(temp), list_of_datapoints[i])
-        # Reset the boolean variable.
-        not_repeat = True
+        f.write(list_of_datapoints[i])
+    f.close()
 
-    # Replace the filtered list with the original list.
-    list_of_datapoints = temp
-
-    # The rationale behind the next chunk of code is that we want to find chunks of data where the x and y coordinate
-    # locations are close to each other. So, to do that, we have a list that will temporarily hold groups of data points
-    # that are close to each other. If that list goes up to more than five, then we know that there is a group of data
-    # points that is long enough to be notable, thus we will update the "shine" list to denote that those points need to
-    # be overlayed with a bigger circle. In order to tell if a data point is close to the other data points, we will
-    # compare it against all the data points to see if it's within the range of a certain distance (in this sample case,
-    # it's 20). If we reach a point where it's not within that range, the "group" is considered "complete" and we move
-    # on to the next group, clearing out the temporary list and filling it up with the new group.
-
-    # Once again use a temporary list to store the list of points that are close to each other and are in adjacent lines
-    # in the gazedata.
-    temp = []
-    # Shine will be a list to denote whether we should use a bigger circle or not. Bigger circle denotes longer gaze
-    # time at that general location. Shine is essentially a list that is the same length as the list_of_datapoints and
-    # maps each data point such that it check if that data point is part of a cluster of data that have coordinates
-    # close to each other. 1 means it is, 0 means it's not.
-    shine = []
-    # Variable that lets us know if we should put that data point in the temporary list.
-    put_in = True
-    # Check each item in the list_of_datapoints
-    for i in range(0, len(list_of_datapoints)):
-        # Compare it against the items of the current group
-        for j in range(0, len(temp)):
-            # The range comparison that was mentioned above.
-            x_dist = abs(float(temp[j].split()[0]) - float(list_of_datapoints[i].split()[0]))
-            y_dist = abs(float(temp[j].split()[1]) - float(list_of_datapoints[i].split()[1]))
-            if x_dist > 20 or y_dist > 20:
-                # It is not in range, so we should not put it in, thus changing the put in variable to be false.
-                put_in = False
-        # If the put_in variable is true that means it belongs to group so it should be added.
-        if put_in:
-            temp.insert(0, list_of_datapoints[i])
-        # If not, the group is done and we should start over, thus clearing the temporary list and adding the next point
-        # in.
-        else:
-            temp.clear()
-            temp.insert(0, list_of_datapoints[i])
-        # If the list is more than a given number (it's five for this case), that means it's notable.
-        if len(temp) >= 5:
-            # Change every mapping of those data points in shine to be 1.
-            shine.append(1)
-            for j in range(0, len(temp)):
-                shine[len(shine) - 1 - j] = 1
-        # If it's not a notable group, just map the current data point to be 0 for not notable datapoint.
-        else:
-            shine.append(0)
-        # Reset the variable.
-        put_in = True
-
+    print("here")
     # Update where the end of the loop is, now that the size of list_of_datapoints has changed
     loop_end = len(list_of_datapoints) - 1
 
@@ -200,38 +151,21 @@ def some_name(vpath, gpath):
         if counter != 0:
             duration = 0.01
 
-        if shine[i] == 0:
-            # Create that clip of that circle using the data we got.
-            shape = (ImageClip("shape.png")
-                     .set_start(running_time - duration)
-                     .set_end(running_time)
-                     .set_duration(duration)
-                     .set_pos((x, y)))
-        else:
-            shape = (ImageClip("bigger_shape.png")
-                     .set_start(running_time - duration)
-                     .set_end(running_time)
-                     .set_duration(duration)
-                     .set_pos((x, y)))
+        # Create that clip of that circle using the data we got.
+        shape = (ImageClip("shape.png")
+                 .set_start(running_time - duration)
+                 .set_end(running_time)
+                 .set_duration(duration)
+                 .set_pos((x, y)))
 
         # Update the running time, which represents the end timestamp of the next data point.
         running_time = running_time - duration
 
         # Insert that clip into the list that we are going to use to overlay all the clips on top of one another.
-        if duration < 5:
-            list_of_clips.insert(0, shape)
+        list_of_clips.insert(0, shape)
 
     # Insert the actual video into the list.
     list_of_clips.insert(0, video)
     # Overlay the clips and make the video.
     final = CompositeVideoClip(list_of_clips)
-
-    d = datetime.datetime.today()
-    dm = str(d.month)
-    dm = '0' + dm
-    dd = str(d.day)
-    if d.day < 10:
-        dd = '0' + dd
-    d_s = dm + dd + str(d.year)
-
-    final.write_videofile(d_s + "_screen.mp4")
+    final.write_videofile(final_name + ".mp4")

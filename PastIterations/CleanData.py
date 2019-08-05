@@ -1,8 +1,9 @@
 from moviepy.editor import *
 import math
 
-def clean(video, gpath):
+def clean(vpath, gpath):
 
+    video = VideoFileClip(vpath)
     # Open up the file containing the gaze data using path given
     gazefile = open(gpath, "r")
     # Turn that file into a list with each line as an entry
@@ -37,6 +38,19 @@ def clean(video, gpath):
     # Width and height might need to be the resolution numbers that you used.
     x_ratio = (video.w - 20) / width
     y_ratio = (video.h - 20) / height
+
+    temp = []
+    temp.insert(0, list_of_datapoints[0])
+    not_repeat = True
+    for i in range(0, len(list_of_datapoints)):
+        for j in range(0, len(temp)):
+            if temp[j] == list_of_datapoints[i]:
+                not_repeat = False
+        if not_repeat:
+            temp.insert(len(temp), list_of_datapoints[i])
+        not_repeat = True
+
+    list_of_datapoints = temp
 
     # Where to start in these backwards for loops
     loop_end = len(list_of_datapoints) - 1
@@ -93,19 +107,6 @@ def clean(video, gpath):
             # change within a gaze data. Also, not every data timestamp starts in the billions.
             if duration < 0 or duration > video.duration / 2:
                 list_of_datapoints.pop(i - 1)
-
-    temp = [] 
-    temp.insert(0, list_of_datapoints[0])
-    not_repeat = True 
-    for i in range(0, len(list_of_datapoints)): 
-        for j in range(0, len(temp)): 
-            if temp[j] == list_of_datapoints[i]: 
-                not_repeat = False 
-        if not_repeat: 
-            temp.insert(len(temp), list_of_datapoints[i]) 
-        not_repeat = True
-
-    list_of_datapoints = temp
 
     f = open("cleaned_data.txt", "w+")
     for i in range(0, len(list_of_datapoints)):
