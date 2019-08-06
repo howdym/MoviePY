@@ -18,6 +18,7 @@ for f in list_of_sessions:
         video = ""
         audio = ""
         temp_name = ""
+        temp_name2 = ""
         for filename in os.listdir(i):
             if filename.endswith(".stream~") or filename.endswith(".stream_"):
                 gaze = os.path.join(i, filename)
@@ -26,6 +27,7 @@ for f in list_of_sessions:
             elif filename.endswith(".wav"):
                 audio = os.path.join(i, filename)
             temp_name = os.path.join(i, "inter.mp4")
+            temp_name2 = os.path.join(i, "inter1.mp4")
         last_fslash = i.rfind('\\')
         first_bslash = i.find('/')
         comp_name = i[last_fslash + 1: len(i)]
@@ -33,10 +35,11 @@ for f in list_of_sessions:
         name = sesh_number + comp_name + "_overlayed"
         clip = VideoFileClip(video)
         if float(clip.w / clip.h) != float(1280 / 720):
-            os.system("ffmpeg -i " + video + " -vf scale=720:405 inter1.mp4")
-            os.system("del /f " + video)
-            os.system("move inter1.mp4 " + video)
+            os.system("ffmpeg -i " + video + " -vf scale=720:405 " + temp_name2)
+            video = temp_name2
         os.system("ffmpeg -i " + video + " -i " + audio + " -c:a aac -shortest " + temp_name)
-        os.system("python main.py inter.mp4 " + gaze + name)
-        os.system("del /f " + temp_name)
+        os.system("python main.py " + temp_name[2:len(temp_name)] + " " + gaze[2:len(gaze)] + " " + name)
+        os.system("del /f " + temp_name[2:len(temp_name)])
+        if temp_name2 == video:
+            os.system("del /f " + temp_name2[2:len(temp_name2)])
     list_of_folders.clear()
