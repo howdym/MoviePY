@@ -7,7 +7,7 @@ UPDATES:
 
 NOTE: This system is specifically made for the data from the SSI pipelines that were taken from TIILT's study on Coding with Minecraft. So, if you're just trying to put some random data into this script, no guarantee it will work. 
 
-FEATURES: 
+CONTENTS: 
 
 mass_processing.py: This is the script I made to automate the process of filtering the data of each student's videos. We had each of their videos and their corresponding gaze data in seperate folders, so the script scrapes through each folder and processes the data automatically. 
 
