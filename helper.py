@@ -26,9 +26,11 @@ def some_name(vpath, gpath, final_name):
 
     cnt = collections.Counter()
 
+    # Creates a counter that keeps track of how many copies of each line of datapoints there are in the dataset.
     for i in range(0, len(list_of_datapoints)):
         cnt[list_of_datapoints[i]] += 1
 
+    # Gets rid of all but the first occurence of a repeated datapoint line
     for i in cnt.most_common():
         if i[1] > 1:
             counter = i[1]
@@ -68,7 +70,7 @@ def some_name(vpath, gpath, final_name):
         x = float(line[0]) * x_ratio
         y = float(line[1]) * y_ratio
 
-        # If the coordinates aren't on the frame, remove it.
+        # If the coordinates aren't on the frame, remove it. For some reason, the actual video width/length is not considered in the frame, but subtracting 20 does.
         if x > (video.w - 20) or x <= 0 or y > (video.h - 20) or y <= 0:
             list_of_datapoints.pop(i)
 
@@ -97,6 +99,7 @@ def some_name(vpath, gpath, final_name):
             if duration < 0 or duration > video.duration / 2:
                 list_of_datapoints.pop(i - 1)
 
+    # To write out the now cleaned list of datapoints 
     f = open(final_name + ".txt", "w+")
     for i in range(0, len(list_of_datapoints)):
         f.write(list_of_datapoints[i])
@@ -104,10 +107,6 @@ def some_name(vpath, gpath, final_name):
 
     # Update where the end of the loop is, now that the size of list_of_datapoints has changed
     loop_end = len(list_of_datapoints) - 1
-
-    # Counter is for a workaround to solving the problem of many points having the same timestamp, which means they
-    # happened at the same time, which isn't possible.
-    counter = 0
 
     # Starting for loop for making the little clips of circles and putting it in a list.
     for i in range(loop_end, -1, -1):
@@ -129,24 +128,6 @@ def some_name(vpath, gpath, final_name):
             duration = (end - start) / 1000
         else:
             # Have the last data point last for 10 milliseconds, since no "start" and "end" can be made for that point
-            duration = 0.01
-
-        # Here is the workaround: every time we see a repetition of timestamps next to each other, we increase the
-        # counter and set the default duration for those coordinates to be 10 milliseconds. This counter will increase x
-        # times depending how x number of repeated timestamps of one specific timestamp. Once that specific timestamp
-        # doesn't repeat anymore, we compensate for the fact that we created x * 10 milliseconds of footage and subtract
-        # that from the non-zero duration of that point so that we don't create footage that doesn't exist. Note: we
-        # chose 10 milliseconds because we were given that the eye tracker captures data at least every 10 milliseconds,
-        # so if we subtract footage, the duration should never be negative.
-        if duration == 0:
-            counter += 1
-        else:
-            duration -= 0.01 * counter
-            counter = 0
-
-        # Essentially the counter is supposed to count how many times a given timestamp repeats consecutively. Once that
-        # timestamp doesn't repeat anymore, we should reset the counter, hence that is what we are doing right now.
-        if counter != 0:
             duration = 0.01
 
         # Create that clip of that circle using the data we got.
